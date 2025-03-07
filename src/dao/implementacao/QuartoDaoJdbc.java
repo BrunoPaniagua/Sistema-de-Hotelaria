@@ -11,6 +11,7 @@ import banco.DbException;
 import dao.QuartoDao;
 import entidades.EstadoQuarto;
 import entidades.Quarto;
+import utilitarios.DbUtils;
 
 public class QuartoDaoJdbc implements QuartoDao {
 
@@ -18,14 +19,6 @@ public class QuartoDaoJdbc implements QuartoDao {
 
 	public QuartoDaoJdbc(Connection con) {
 		this.con = con;
-	}
-
-	private void checarAcao(int rows) {
-		if (rows == 0) {
-			System.out.println("Algo deu errado");
-		} else {
-			System.out.println("Acão feita com sucesso");
-		}
 	}
 
 	private Quarto instanciarQuarto(ResultSet rs) throws SQLException {
@@ -71,7 +64,7 @@ public class QuartoDaoJdbc implements QuartoDao {
 										""");
 			ps.setInt(1, numero);
 
-			checarAcao(ps.executeUpdate());
+			DbUtils.checarAcao(ps.executeUpdate());
 
 		} catch (SQLException e) {
 			throw new DbException(e.getMessage());
@@ -90,7 +83,7 @@ public class QuartoDaoJdbc implements QuartoDao {
 					""");
 			ps.setInt(1, numero);
 			
-			checarAcao(ps.executeUpdate());
+			DbUtils.checarAcao(ps.executeUpdate());
 			
 		} catch (SQLException e) {
 			throw new DbException(e.getMessage());
