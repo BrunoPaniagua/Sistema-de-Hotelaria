@@ -7,7 +7,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import banco.DB;
 import banco.DbException;
+import banco.DbIntegrityException;
 import dao.QuartoDao;
 import entidades.EstadoQuarto;
 import entidades.Quarto;
@@ -82,12 +84,53 @@ public class QuartoDaoJdbc implements QuartoDao {
 					WHERE numero = ?;
 					""");
 			ps.setInt(1, numero);
-			
+
 			DbUtils.checarAcao(ps.executeUpdate());
-			
+
 		} catch (SQLException e) {
 			throw new DbException(e.getMessage());
 		}
+	}
+
+	@Override
+	public void adicionarQuarto(Quarto quarto) {
+		PreparedStatement ps = null;
+		try {
+			ps = con.prepareStatement("""
+					INSERT INTO quarto(numero, capacidade, estado)
+					VALUES(?, ?, ?)
+					""");
+			ps.setInt(1, quarto.getNumero());
+			ps.setInt(2, quarto.getCapacidade());
+			ps.setString(3, quarto.getEstado().name().toLowerCase());
+
+			DbUtils.checarAcao(ps.executeUpdate());
+
+		} catch (SQLException e) {
+			throw new DbException(e.getSQLState());
+		} finally {
+			DB.CloseStatement(ps);
+		}
+
+	}
+
+	@Override
+	public void deletarQuarto(int numero) {
+		PreparedStatement ps = null;
+		try {
+			ps = con.prepareStatement("""
+					DELETE FROM quarto
+					WHERE numero = ?;
+					""");
+			ps.setInt(1, numero);
+			DbUtils.checarAcao(ps.executeUpdate());
+
+		} catch (SQLException e) {
+			throw new DbIntegrityException(e.getMessage());
+		} finally {
+			DB.CloseStatement(ps);
+		}		
+		
 	}
 
 }

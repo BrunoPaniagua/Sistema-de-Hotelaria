@@ -7,6 +7,7 @@ import dao.ClienteDao;
 import dao.DaoFactory;
 import dao.QuartoDao;
 import entidades.Cliente;
+import entidades.EstadoQuarto;
 import entidades.Quarto;
 
 public class Program {
@@ -37,6 +38,8 @@ public class Program {
 		clienteDao.cadastrarCliente(new Cliente("10987654321", "Fernando", "5519123456789"));
 		*/
 		
+		/*
+		
 		System.out.println("--- Mostar todos os clientes ---");
 		List<Cliente> clientes = clienteDao.mostrarTodosClientes();
 		clientes.forEach(System.out::println);
@@ -46,5 +49,10 @@ public class Program {
 		System.out.println("--------------------");
 		Scanner leitor = new Scanner(System.in);
 		clienteDao.modificarDadosCliente(leitor, "10987654321", 2);
+		*/
+		
+		QuartoDao q1 = DaoFactory.createQuartoDao();
+	
+		q1.deletarQuarto(4);
 	}
 }
