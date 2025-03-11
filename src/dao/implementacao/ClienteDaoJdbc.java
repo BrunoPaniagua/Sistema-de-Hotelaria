@@ -23,14 +23,6 @@ public class ClienteDaoJdbc implements ClienteDao {
 		this.con = con;
 	}
 
-	private Cliente instanciarCliente(ResultSet rs) throws SQLException {
-		Cliente cliente = new Cliente();
-		cliente.setCpf(rs.getString("cpf"));
-		cliente.setNome(rs.getString("nome"));
-		cliente.setTelefone(rs.getString("telefone"));
-		return cliente;
-	}
-
 	@Override
 	public void cadastrarCliente(Cliente cliente) {
 		PreparedStatement ps = null;
@@ -62,7 +54,7 @@ public class ClienteDaoJdbc implements ClienteDao {
 			ps = con.prepareStatement("SELECT * FROM cliente");
 			rs = ps.executeQuery();
 			while (rs.next()) {
-				clientes.add(instanciarCliente(rs));
+				clientes.add(DbUtils.instanciarCliente(rs));
 			}
 			return clientes;
 		} catch (SQLException e) {
@@ -142,7 +134,7 @@ public class ClienteDaoJdbc implements ClienteDao {
 			ps.setString(1, cpf);
 			rs = ps.executeQuery();
 			if (rs.next()) {
-				return instanciarCliente(rs);
+				return DbUtils.instanciarCliente(rs);
 			} else {
 				System.out.println("Não possui um cliente com esse CPF");
 				return null;

@@ -23,14 +23,6 @@ public class QuartoDaoJdbc implements QuartoDao {
 		this.con = con;
 	}
 
-	private Quarto instanciarQuarto(ResultSet rs) throws SQLException {
-		Quarto quarto = new Quarto();
-		quarto.setNumero(rs.getInt("numero"));
-		quarto.setCapacidade(rs.getInt("capacidade"));
-		quarto.setEstado(EstadoQuarto.valueOf(rs.getString("estado").toUpperCase()));
-		return quarto;
-	}
-
 	@Override
 	public List<Quarto> MostrarQuartos() {
 		PreparedStatement ps = null;
@@ -42,7 +34,7 @@ public class QuartoDaoJdbc implements QuartoDao {
 			rs = ps.executeQuery();
 
 			while (rs.next()) {
-				quartos.add(instanciarQuarto(rs));
+				quartos.add(DbUtils.instanciarQuarto(rs));
 			}
 
 		} catch (SQLException e) {
@@ -129,8 +121,35 @@ public class QuartoDaoJdbc implements QuartoDao {
 			throw new DbIntegrityException(e.getMessage());
 		} finally {
 			DB.CloseStatement(ps);
-		}		
-		
+		}
+
+	}
+
+	@Override
+	public Quarto procurarQuarto(int numero) {
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = con.prepareStatement("""
+					SELECT *
+					FROM quarto
+					WHERE numero = ?;
+										""");
+			ps.setInt(1, numero);
+			rs = ps.executeQuery();
+			if (rs.next()) {
+				return DbUtils.instanciarQuarto(rs);
+			} else {
+				System.out.println("Não possui quarto com esse Numero");
+				return null;
+			}
+
+		} catch (SQLException e) {
+			throw new DbException(e.getMessage());
+		} finally {
+			DB.CloseResultSet(rs);
+			DB.CloseStatement(ps);
+		}
 	}
 
 }

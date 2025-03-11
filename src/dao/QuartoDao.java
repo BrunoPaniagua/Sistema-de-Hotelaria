@@ -15,4 +15,6 @@ public interface QuartoDao {
 	void adicionarQuarto(Quarto quarto);
 	
 	void deletarQuarto(int numero);
+	
+	Quarto procurarQuarto(int numero);
 }
