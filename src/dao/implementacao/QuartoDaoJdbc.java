@@ -8,11 +8,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 import banco.DB;
-import banco.DbException;
-import banco.DbIntegrityException;
 import dao.QuartoDao;
 import entidades.EstadoQuarto;
 import entidades.Quarto;
+import excecoes.banco.DbException;
+import excecoes.banco.DbIntegrityException;
+import excecoes.quarto.CapacidadeInvalidaException;
+import excecoes.quarto.EstadoQuartoInvalidoException;
+import excecoes.quarto.QuartoEmManutencaoException;
+import excecoes.quarto.QuartoJaExistenteException;
+import excecoes.quarto.QuartoNaoExisteException;
 import utilitarios.DbUtils;
 
 public class QuartoDaoJdbc implements QuartoDao {
@@ -24,7 +29,7 @@ public class QuartoDaoJdbc implements QuartoDao {
 	}
 
 	@Override
-	public List<Quarto> MostrarQuartos() {
+	public List<Quarto> mostrarQuartos() {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		List<Quarto> quartos = new ArrayList<Quarto>();
@@ -48,39 +53,57 @@ public class QuartoDaoJdbc implements QuartoDao {
 	}
 
 	@Override
-	public void ColocarManutencao(int numero) {
+	public void colocarManutencao(int numero) {
+
 		PreparedStatement ps = null;
 		try {
-			ps = con.prepareStatement("""
-					UPDATE quarto
-					SET estado = 'manutencao'
-					WHERE numero = ?;
-										""");
-			ps.setInt(1, numero);
-
-			DbUtils.checarAcao(ps.executeUpdate());
+			Quarto quarto = procurarQuarto(numero);
+			if (quarto.getEstado() == EstadoQuarto.MANUTENCAO) {
+				throw new QuartoEmManutencaoException("Quarto já está em manutenção");
+			} else {
+				ps = con.prepareStatement("""
+						UPDATE quarto
+						SET estado = 'manutencao'
+						WHERE numero = ?;
+											""");
+				ps.setInt(1, numero);
+				ps.executeUpdate();
+			}
 
 		} catch (SQLException e) {
 			throw new DbException(e.getMessage());
+		} catch (QuartoNaoExisteException e) {
+			System.out.println(e.getMessage());
+		} finally {
+			DB.CloseStatement(ps);
 		}
 
 	}
 
 	@Override
-	public void TirarManutencao(int numero) {
+	public void tirarManutencao(int numero) {
 		PreparedStatement ps = null;
 		try {
-			ps = con.prepareStatement("""
-					UPDATE quarto
-					SET estado = 'disponivel'
-					WHERE numero = ?;
-					""");
-			ps.setInt(1, numero);
+			Quarto quarto = procurarQuarto(numero);
+			if (quarto.getEstado() != EstadoQuarto.MANUTENCAO) {
+				throw new QuartoEmManutencaoException("Ação indisponível, pois o quarto não está em manutenção");
+			} else {
+				ps = con.prepareStatement("""
+						UPDATE quarto
+						SET estado = 'disponivel'
+						WHERE numero = ?;
+						""");
+				ps.setInt(1, numero);
 
-			DbUtils.checarAcao(ps.executeUpdate());
+				ps.executeUpdate();
+			}
 
 		} catch (SQLException e) {
 			throw new DbException(e.getMessage());
+		} catch (QuartoNaoExisteException e) {
+			System.out.println(e.getMessage());
+		} finally {
+			DB.CloseStatement(ps);
 		}
 	}
 
@@ -88,6 +111,19 @@ public class QuartoDaoJdbc implements QuartoDao {
 	public void adicionarQuarto(Quarto quarto) {
 		PreparedStatement ps = null;
 		try {
+
+			if (procurarQuarto(quarto.getNumero()) != null) {
+				throw new QuartoJaExistenteException();
+			}
+
+			if (quarto.getCapacidade() <= 0) {
+				throw new CapacidadeInvalidaException();
+			}
+
+			if (quarto.getEstado() == null) {
+				throw new EstadoQuartoInvalidoException();
+			}
+
 			ps = con.prepareStatement("""
 					INSERT INTO quarto(numero, capacidade, estado)
 					VALUES(?, ?, ?)
@@ -100,6 +136,8 @@ public class QuartoDaoJdbc implements QuartoDao {
 
 		} catch (SQLException e) {
 			throw new DbException(e.getSQLState());
+		} catch (QuartoNaoExisteException e) {
+			System.out.println(e.getMessage());
 		} finally {
 			DB.CloseStatement(ps);
 		}
@@ -110,6 +148,13 @@ public class QuartoDaoJdbc implements QuartoDao {
 	public void deletarQuarto(int numero) {
 		PreparedStatement ps = null;
 		try {
+
+			Quarto quarto = procurarQuarto(numero);
+
+			if (quarto == null) {
+				throw new QuartoNaoExisteException();
+			}
+
 			ps = con.prepareStatement("""
 					DELETE FROM quarto
 					WHERE numero = ?;
@@ -119,6 +164,8 @@ public class QuartoDaoJdbc implements QuartoDao {
 
 		} catch (SQLException e) {
 			throw new DbIntegrityException(e.getMessage());
+		} catch (QuartoNaoExisteException e) {
+			System.out.println(e.getMessage());
 		} finally {
 			DB.CloseStatement(ps);
 		}
@@ -126,10 +173,11 @@ public class QuartoDaoJdbc implements QuartoDao {
 	}
 
 	@Override
-	public Quarto procurarQuarto(int numero) {
+	public Quarto procurarQuarto(int numero) throws SQLException {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		try {
+
 			ps = con.prepareStatement("""
 					SELECT *
 					FROM quarto
@@ -140,12 +188,11 @@ public class QuartoDaoJdbc implements QuartoDao {
 			if (rs.next()) {
 				return DbUtils.instanciarQuarto(rs);
 			} else {
-				System.out.println("Não possui quarto com esse Numero");
-				return null;
+				throw new QuartoNaoExisteException();
 			}
 
 		} catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			throw new SQLException();
 		} finally {
 			DB.CloseResultSet(rs);
 			DB.CloseStatement(ps);

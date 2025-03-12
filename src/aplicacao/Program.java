@@ -20,7 +20,13 @@ public class Program {
 		ReservaDao reserva = DaoFactory.createReservaDao();
 		QuartoDao quarto = DaoFactory.createQuartoDao();
 		
-		reserva.terminarReserva(3);
+		Quarto quartoTeste = new Quarto(4, 1, null);
+		
+		try {
+			quarto.adicionarQuarto(quartoTeste);
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
 		
 	}
 }

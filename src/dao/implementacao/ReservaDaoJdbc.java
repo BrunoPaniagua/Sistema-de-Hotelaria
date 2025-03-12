@@ -10,12 +10,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import banco.DbException;
-import banco.DbIntegrityException;
 import dao.ReservaDao;
 import entidades.Cliente;
 import entidades.Quarto;
 import entidades.Reserva;
+import excecoes.banco.DbException;
+import excecoes.banco.DbIntegrityException;
 import utilitarios.DbUtils;
 
 public class ReservaDaoJdbc implements ReservaDao {

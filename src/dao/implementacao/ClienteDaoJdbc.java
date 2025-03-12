@@ -9,10 +9,10 @@ import java.util.List;
 import java.util.Scanner;
 
 import banco.DB;
-import banco.DbException;
-import banco.DbIntegrityException;
 import dao.ClienteDao;
 import entidades.Cliente;
+import excecoes.banco.DbException;
+import excecoes.banco.DbIntegrityException;
 import utilitarios.DbUtils;
 
 public class ClienteDaoJdbc implements ClienteDao {
