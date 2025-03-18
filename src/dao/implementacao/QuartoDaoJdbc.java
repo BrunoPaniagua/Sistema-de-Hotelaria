@@ -14,10 +14,11 @@ import entidades.Quarto;
 import excecoes.banco.DbException;
 import excecoes.banco.DbIntegrityException;
 import excecoes.quarto.CapacidadeInvalidaException;
-import excecoes.quarto.EstadoQuartoInvalidoException;
+import excecoes.quarto.QuartoEstadoInvalidoException;
 import excecoes.quarto.QuartoEmManutencaoException;
 import excecoes.quarto.QuartoJaExistenteException;
 import excecoes.quarto.QuartoNaoExisteException;
+import excecoes.quarto.QuartoNumeroInvalido;
 import utilitarios.DbUtils;
 
 public class QuartoDaoJdbc implements QuartoDao {
@@ -109,37 +110,45 @@ public class QuartoDaoJdbc implements QuartoDao {
 
 	@Override
 	public void adicionarQuarto(Quarto quarto) {
-		PreparedStatement ps = null;
 		try {
 
-			if (procurarQuarto(quarto.getNumero()) != null) {
-				throw new QuartoJaExistenteException();
+			if(quarto.getNumero()<=0) {
+				throw new QuartoNumeroInvalido();
 			}
-
+			
 			if (quarto.getCapacidade() <= 0) {
 				throw new CapacidadeInvalidaException();
 			}
 
 			if (quarto.getEstado() == null) {
-				throw new EstadoQuartoInvalidoException();
+				throw new QuartoEstadoInvalidoException();
 			}
-
-			ps = con.prepareStatement("""
-					INSERT INTO quarto(numero, capacidade, estado)
-					VALUES(?, ?, ?)
-					""");
-			ps.setInt(1, quarto.getNumero());
-			ps.setInt(2, quarto.getCapacidade());
-			ps.setString(3, quarto.getEstado().name().toLowerCase());
-
-			DbUtils.checarAcao(ps.executeUpdate());
+			
+			if (procurarQuarto(quarto.getNumero()) != null) {
+				throw new QuartoJaExistenteException();
+			}
 
 		} catch (SQLException e) {
 			throw new DbException(e.getSQLState());
 		} catch (QuartoNaoExisteException e) {
-			System.out.println(e.getMessage());
-		} finally {
-			DB.CloseStatement(ps);
+			
+			PreparedStatement ps = null;
+			try {
+				ps = con.prepareStatement("""
+						INSERT INTO quarto(numero, capacidade, estado)
+						VALUES(?, ?, ?)
+						""");
+				ps.setInt(1, quarto.getNumero());
+				ps.setInt(2, quarto.getCapacidade());
+				ps.setString(3, quarto.getEstado().name().toLowerCase());
+
+				DbUtils.checarAcao(ps.executeUpdate());
+			} catch (SQLException e2) {
+				throw new DbException(e.getMessage());
+			} finally {
+				DB.CloseStatement(ps);
+			}
+			
 		}
 
 	}

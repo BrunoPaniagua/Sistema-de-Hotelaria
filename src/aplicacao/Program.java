@@ -20,7 +20,7 @@ public class Program {
 		ReservaDao reserva = DaoFactory.createReservaDao();
 		QuartoDao quarto = DaoFactory.createQuartoDao();
 		
-		Quarto quartoTeste = new Quarto(4, 1, null);
+		Quarto quartoTeste = new Quarto(0, 1, null);
 		
 		try {
 			quarto.adicionarQuarto(quartoTeste);
