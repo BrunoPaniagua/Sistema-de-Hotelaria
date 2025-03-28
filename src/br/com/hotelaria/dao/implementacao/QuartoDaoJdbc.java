@@ -13,12 +13,12 @@ import br.com.hotelaria.entidades.EstadoQuarto;
 import br.com.hotelaria.entidades.Quarto;
 import br.com.hotelaria.excecoes.banco.DbException;
 import br.com.hotelaria.excecoes.banco.DbIntegrityException;
-import br.com.hotelaria.excecoes.quarto.CapacidadeInvalidaException;
+import br.com.hotelaria.excecoes.quarto.QuartoCapacidadeInvalidaException;
 import br.com.hotelaria.excecoes.quarto.QuartoEmManutencaoException;
 import br.com.hotelaria.excecoes.quarto.QuartoEstadoInvalidoException;
 import br.com.hotelaria.excecoes.quarto.QuartoJaExistenteException;
 import br.com.hotelaria.excecoes.quarto.QuartoNaoExisteException;
-import br.com.hotelaria.excecoes.quarto.QuartoNumeroInvalido;
+import br.com.hotelaria.excecoes.quarto.QuartoNumeroInvalidoException;
 import br.com.hotelaria.utilitarios.DbUtils;
 
 public class QuartoDaoJdbc implements QuartoDao {
@@ -113,11 +113,11 @@ public class QuartoDaoJdbc implements QuartoDao {
 		try {
 
 			if(quarto.getNumero()<=0) {
-				throw new QuartoNumeroInvalido();
+				throw new QuartoNumeroInvalidoException();
 			}
 			
 			if (quarto.getCapacidade() <= 0) {
-				throw new CapacidadeInvalidaException();
+				throw new QuartoCapacidadeInvalidaException();
 			}
 
 			if (quarto.getEstado() == null) {
@@ -129,11 +129,12 @@ public class QuartoDaoJdbc implements QuartoDao {
 			}
 
 		} catch (SQLException e) {
-			throw new DbException(e.getSQLState());
+			throw new DbException(e.getMessage());
 		} catch (QuartoNaoExisteException e) {
 			
 			PreparedStatement ps = null;
 			try {
+				
 				ps = con.prepareStatement("""
 						INSERT INTO quarto(numero, capacidade, estado)
 						VALUES(?, ?, ?)
@@ -142,7 +143,8 @@ public class QuartoDaoJdbc implements QuartoDao {
 				ps.setInt(2, quarto.getCapacidade());
 				ps.setString(3, quarto.getEstado().name().toLowerCase());
 
-				DbUtils.checarAcao(ps.executeUpdate());
+				ps.executeUpdate();
+				
 			} catch (SQLException e2) {
 				throw new DbException(e.getMessage());
 			} finally {
@@ -160,25 +162,21 @@ public class QuartoDaoJdbc implements QuartoDao {
 
 			Quarto quarto = procurarQuarto(numero);
 
-			if (quarto == null) {
-				throw new QuartoNaoExisteException();
-			}
 
 			ps = con.prepareStatement("""
 					DELETE FROM quarto
 					WHERE numero = ?;
 					""");
 			ps.setInt(1, numero);
-			DbUtils.checarAcao(ps.executeUpdate());
+			ps.executeUpdate();
 
 		} catch (SQLException e) {
 			throw new DbIntegrityException(e.getMessage());
 		} catch (QuartoNaoExisteException e) {
-			System.out.println(e.getMessage());
+			throw new QuartoNaoExisteException();
 		} finally {
 			DB.CloseStatement(ps);
 		}
-
 	}
 
 	@Override

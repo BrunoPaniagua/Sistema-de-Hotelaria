@@ -44,8 +44,6 @@ VALUES
 ('2025-03-18 10:00:00', '2025-03-22 11:00:00', '10987654321', 3);
 
 SELECT *
-FROM quarto q
-INNER JOIN reserva r ON r.quarto_numero = q.numero
-INNER JOIN cliente c ON c.cpf = r.cliente_cpf;
+FROM quarto;
 
 
